@@ -205,20 +205,14 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     // ドリンクコーナー（左上）
     el("rect",{class:"decor",x:30,y:30,width:126,height:34,rx:5}, svg);
     el("text",{class:"decortext",x:40,y:52}, svg).textContent="ドリンクコーナー";
-    // 受付テーブル（中央上）
-    el("circle",{class:"decor",cx:430,cy:56,r:16}, svg);
-    el("text",{class:"decortext",x:452,y:50}, svg).textContent="受付";
     // ステージ（右端）
     el("rect",{class:"stagebox",x:845,y:150,width:120,height:320,rx:6}, svg);
     el("text",{class:"stagetext",x:905,y:318,transform:"rotate(90 905 318)"}, svg).textContent="ステージ";
-    // MC / PA（ステージ左）
-    el("rect",{class:"decor",x:778,y:360,width:50,height:40,rx:5}, svg);
-    el("text",{class:"decortext",x:790,y:385}, svg).textContent="MC";
-    el("rect",{class:"decor",x:778,y:412,width:50,height:40,rx:5}, svg);
-    el("text",{class:"decortext",x:791,y:437}, svg).textContent="PA";
-    // 階段（下部中央）
-    el("rect",{class:"decor",x:380,y:648,width:150,height:30,rx:4}, svg);
-    el("text",{class:"decortext",x:432,y:669}, svg).textContent="階段";
+    // MC / PA（ステージの横）
+    el("rect",{class:"decor",x:789,y:248,width:48,height:42,rx:5}, svg);
+    el("text",{class:"decortext",x:800,y:274}, svg).textContent="MC";
+    el("rect",{class:"decor",x:789,y:300,width:48,height:42,rx:5}, svg);
+    el("text",{class:"decortext",x:801,y:326}, svg).textContent="PA";
     // 卓
     for(const t of TABLES){
       const [cx,cy]=POS[t];
