@@ -116,7 +116,7 @@
 <div class="modal" id="modal">
   <div class="card">
     <h2>名簿の取り込み設定</h2>
-    <p class="hint">どの列が「卓（A〜O）」で、どの列が「名前」かを選んでください。自動で推定しますが、違っていれば直してください。</p>
+    <p class="hint">どの列が「卓（A〜R）」で、どの列が「名前」かを選んでください。自動で推定しますが、違っていれば直してください。</p>
     <div class="field">
       <label>シート</label>
       <select id="selSheet"></select>
@@ -126,7 +126,7 @@
       <input id="selHeader" type="number" min="1" value="1">
     </div>
     <div class="field">
-      <label>卓の列（A〜O が入っている列）</label>
+      <label>卓の列（A〜R が入っている列）</label>
       <select id="selTable"></select>
     </div>
     <div class="field">
@@ -178,13 +178,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 <script>
 "use strict";
 (function(){
-  const TABLES = "ABCDEFGHIJKLMNO".split("");
-  // 卓の位置（スキャン準拠：ステージ右）viewBox 1000x700。全体に広く配置。
+  const TABLES = "ABCDEFGHIJKLMNOPQR".split("");
+  // 卓の位置（ステージ右）viewBox 1000x700。左から 4-3-4-4-3 の5列、計18卓。
+  // 採番はステージ側（右）からA…。右端列 A,B,C ／ 左端列 O,P,Q,R。
   const POS = {
-    A:[700,130], B:[700,290], C:[700,450], D:[700,585],
-    E:[515,205], F:[515,385], G:[515,560],
-    H:[330,130], I:[330,290], J:[330,450], K:[330,585],
-    L:[140,130], M:[140,290], N:[140,450], O:[140,585]
+    A:[745,185], B:[745,360], C:[745,540],
+    D:[600,125], E:[600,285], F:[600,445], G:[600,600],
+    H:[440,125], I:[440,285], J:[440,445], K:[440,600],
+    L:[275,185], M:[275,360], N:[275,540],
+    O:[110,125], P:[110,285], Q:[110,445], R:[110,600]
   };
   const R = 37;            // 卓半径
   const STORE = "seating80th_v1";
@@ -263,7 +265,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     if(!s) return null;
     // 全角英字→半角
     s=s.replace(/[Ａ-Ｚａ-ｚ]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0));
-    const m=s.match(/[A-Oa-o]/);   // 「A卓」「A班」「Aテーブル」等にも対応
+    const m=s.match(/[A-Ra-r]/);   // 「A卓」「A班」「Aテーブル」等にも対応
     if(!m) return null;
     return m[0].toUpperCase();
   }
@@ -377,7 +379,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function updatePreview(){
     const r=buildFromSetup();
     const filled=TABLES.filter(t=>r.tables[t].length).length;
-    $("#prev").innerHTML = `15卓中 <b>${filled}卓</b> に割当 ／ 計 <b>${r.total}名</b>`
+    $("#prev").innerHTML = `${TABLES.length}卓中 <b>${filled}卓</b> に割当 ／ 計 <b>${r.total}名</b>`
       + (r.unassigned?` <span style="color:#e0a23a">（卓未指定で除外 ${r.unassigned}名）</span>`:"");
     return r;
   }
