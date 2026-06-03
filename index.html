@@ -208,11 +208,11 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     // ステージ（右端）
     el("rect",{class:"stagebox",x:845,y:150,width:120,height:320,rx:6}, svg);
     el("text",{class:"stagetext",x:905,y:318,transform:"rotate(90 905 318)"}, svg).textContent="ステージ";
-    // MC / PA（ステージの脇＝舞台袖。ステージ左端に密着、上下に配置）
-    el("rect",{class:"decor",x:799,y:158,width:46,height:44,rx:5}, svg);
-    el("text",{class:"decortext",x:810,y:185}, svg).textContent="MC";
-    el("rect",{class:"decor",x:799,y:418,width:46,height:44,rx:5}, svg);
-    el("text",{class:"decortext",x:811,y:445}, svg).textContent="PA";
+    // MC / PA（右下＝ステージ下の右側に上下で配置）
+    el("rect",{class:"decor",x:862,y:498,width:50,height:42,rx:5}, svg);
+    el("text",{class:"decortext",x:874,y:524}, svg).textContent="MC";
+    el("rect",{class:"decor",x:862,y:550,width:50,height:42,rx:5}, svg);
+    el("text",{class:"decortext",x:875,y:576}, svg).textContent="PA";
     // 卓
     for(const t of TABLES){
       const [cx,cy]=POS[t];
