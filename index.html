@@ -396,8 +396,16 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 
   // ---------- 保存/復元 ----------
   function save(){ try{ localStorage.setItem(STORE, JSON.stringify(DATA)); }catch(e){} }
+  function b64urlToStr(b64){
+    b64=b64.replace(/-/g,"+").replace(/_/g,"/"); while(b64.length%4) b64+="=";
+    const bin=atob(b64), bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    return new TextDecoder("utf-8").decode(bytes);
+  }
   function restore(){
     if(window.__BAKED__){ DATA=window.__BAKED__; return true; }
+    // URLハッシュ #d=... に埋め込まれた名簿（サーバー/リポジトリには残らない）
+    try{ const m=(location.hash||"").match(/[#&]d=([^&]+)/);
+      if(m){ DATA=JSON.parse(b64urlToStr(decodeURIComponent(m[1]))); save(); return true; } }catch(e){}
     try{ const s=localStorage.getItem(STORE); if(s){ DATA=JSON.parse(s); return true; } }catch(e){}
     return false;
   }
