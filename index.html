@@ -409,6 +409,25 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     try{ const s=localStorage.getItem(STORE); if(s){ DATA=JSON.parse(s); return true; } }catch(e){}
     return false;
   }
+  // 圧縮版ハッシュ #z=（deflate+base64url）。短いURL/QR用。
+  async function inflateZ(b64){
+    b64=b64.replace(/-/g,"+").replace(/_/g,"/"); while(b64.length%4) b64+="=";
+    const bin=atob(b64), bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+    const ds=new DecompressionStream("deflate-raw");
+    const res=new Response(new Blob([bytes]).stream().pipeThrough(ds));
+    return new TextDecoder("utf-8").decode(new Uint8Array(await res.arrayBuffer()));
+  }
+  async function applyHashZ(){
+    const m=(location.hash||"").match(/[#&]z=([^&]+)/); if(!m) return false;
+    try{
+      const tbl=JSON.parse(await inflateZ(decodeURIComponent(m[1])));
+      const t={}; let total=0; TABLES.forEach(k=>t[k]=[]);
+      Object.keys(tbl).forEach(k=>{ (tbl[k]||[]).forEach(n=>{ (t[k]=t[k]||[]).push({name:n,sub:""}); total++; }); });
+      DATA={tables:t,total:total,when:""}; save();
+      $("#status").textContent=`${total}名 / ${TABLES.filter(x=>t[x]&&t[x].length).length}卓`;
+      $("#exportBtn").style.display=""; refreshCounts(); return true;
+    }catch(e){ return false; }
+  }
 
   // ---------- スマホ用に書き出し（データ入りHTML） ----------
   function exportBaked(){
@@ -456,6 +475,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     $("#exportBtn").style.display="";
     refreshCounts();
   }
+  applyHashZ(); // 圧縮版URL/QRで開いた場合に反映（非同期）
   if(window.__BAKED__){ // データ入りファイルでは読込系ボタンを隠してシンプルに
     $("#loadBtn").style.display="none"; $("#setupBtn").style.display="none"; $("#exportBtn").style.display="none";
     $("#status").textContent=`${DATA.total||0}名（保存済みデータ）`;
