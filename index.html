@@ -116,7 +116,7 @@
 <div class="modal" id="modal">
   <div class="card">
     <h2>名簿の取り込み設定</h2>
-    <p class="hint">どの列が「卓（A〜R）」で、どの列が「名前」かを選んでください。自動で推定しますが、違っていれば直してください。</p>
+    <p class="hint">どの列が「卓（A〜Q）」で、どの列が「名前」かを選んでください。自動で推定しますが、違っていれば直してください。</p>
     <div class="field">
       <label>シート</label>
       <select id="selSheet"></select>
@@ -126,7 +126,7 @@
       <input id="selHeader" type="number" min="1" value="1">
     </div>
     <div class="field">
-      <label>卓の列（A〜R が入っている列）</label>
+      <label>卓の列（A〜Q が入っている列）</label>
       <select id="selTable"></select>
     </div>
     <div class="field">
@@ -178,15 +178,15 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
 <script>
 "use strict";
 (function(){
-  const TABLES = "ABCDEFGHIJKLMNOPQR".split("");
-  // 卓の位置（ステージ右）viewBox 1000x700。右から 4-3-4-4-3 の5列、計18卓。
-  // 採番はステージ側(右)からアルファベット順: ABCD(4)｜EFG(3)｜HIJK(4)｜LMNO(4)｜PQR(3)。
+  const TABLES = "ABCDEFGHIJKLMNOPQ".split("");
+  // 卓の位置（ステージ右）viewBox 1000x700。右から 4-3-3-4-3 の5列、計17卓。
+  // 採番はステージ側(右)からアルファベット順: ABCD(4)｜EFG(3)｜HIJ(3)｜KLMN(4)｜OPQ(3)。
   const POS = {
     A:[745,125], B:[745,285], C:[745,445], D:[745,600],
     E:[600,185], F:[600,360], G:[600,540],
-    H:[440,125], I:[440,285], J:[440,445], K:[440,600],
-    L:[275,125], M:[275,285], N:[275,445], O:[275,600],
-    P:[110,185], Q:[110,360], R:[110,540]
+    H:[440,185], I:[440,360], J:[440,540],
+    K:[275,125], L:[275,285], M:[275,445], N:[275,600],
+    O:[110,185], P:[110,360], Q:[110,540]
   };
   const R = 37;            // 卓半径
   const STORE = "seating80th_v1";
