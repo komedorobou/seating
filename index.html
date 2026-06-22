@@ -34,6 +34,27 @@
   .tcircle{fill:var(--circle);stroke:#cbd5e1;stroke-width:2.5;transition:fill .15s}
   .table.filled .tcircle{fill:var(--filled);stroke:#2f7df6;stroke-width:3}
   .table:active .tcircle{fill:#9ec3ff}
+  .table.hit .tcircle{fill:#ffd84d;stroke:#ff9f0a;stroke-width:5;filter:drop-shadow(0 0 9px #ffce3a)}
+  .table.hit .tletter{fill:#11161c}
+  .table.dim{opacity:.32}
+  /* 検索 */
+  .search{position:relative;flex:1;min-width:140px;max-width:340px}
+  .search input{width:100%;font:inherit;font-size:14px;padding:8px 30px 8px 12px;border-radius:10px;
+    border:1px solid var(--line);background:#10151b;color:var(--ink)}
+  .search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;
+    color:var(--sub);font-size:17px;cursor:pointer;display:none;padding:2px 4px}
+  .results{position:absolute;left:0;right:0;top:calc(100% + 5px);background:var(--panel);
+    border:1px solid var(--line);border-radius:11px;max-height:60vh;overflow:auto;z-index:40;
+    box-shadow:0 12px 30px rgba(0,0,0,.45);display:none}
+  .results.show{display:block}
+  .results .r{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #20262e;cursor:pointer}
+  .results .r:last-child{border-bottom:none}
+  .results .r:hover,.results .r.act{background:#1d2530}
+  .results .r .tag{background:var(--accent);color:#fff;font-weight:800;font-size:13px;min-width:30px;
+    height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .results .r .nm{font-size:14px;line-height:1.35}
+  .results .r .nm b{color:#ffd84d;font-weight:700}
+  .results .none{padding:16px 12px;color:var(--sub);font-size:13px;text-align:center}
   .tletter{fill:var(--circleInk);font-size:34px;font-weight:800;text-anchor:middle;dominant-baseline:central}
   .tcount{fill:#2f63b8;font-size:14px;font-weight:700;text-anchor:middle}
   .seat{fill:#e9eef4;stroke:#cbd5e1;stroke-width:1.5}
@@ -86,12 +107,12 @@
 <body>
 <header>
   <h1>80周年 席次図</h1>
-  <span id="status" class="status">Excel未読込</span>
-  <span class="sp"></span>
-  <button id="loadBtn" class="btn primary">Excel読込</button>
-  <button id="setupBtn" class="btn ghost" style="display:none">列設定</button>
-  <button id="exportBtn" class="btn ghost" style="display:none">スマホ用に書き出し</button>
-  <input id="file" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+  <div class="search">
+    <input id="q" type="search" inputmode="search" autocomplete="off" placeholder="名前で検索（卓がわかります）">
+    <button id="qclr" class="clr" title="クリア">✕</button>
+    <div id="results" class="results"></div>
+  </div>
+  <span id="status" class="status"></span>
 </header>
 
 <div id="stage">
@@ -248,7 +269,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     const list = (DATA&&DATA.tables[t])||[];
     $("#sheetN").textContent = list.length ? `${list.length}名` : "";
     const ul=$("#sheetList"); ul.innerHTML="";
-    if(!DATA){ ul.innerHTML='<div class="empty">まだ名簿を読み込んでいません。<br>右上の「Excel読込」から取り込んでください。</div>'; }
+    if(!DATA){ ul.innerHTML='<div class="empty">データが読み込まれていません。</div>'; }
     else if(!list.length){ ul.innerHTML='<div class="empty">この卓に割り当てられた人がいません。</div>'; }
     else { list.forEach((m,i)=>{ const li=document.createElement("li");
       li.innerHTML=`<span class="no">${i+1}</span><span><span class="nm">${esc(m.name)}</span>${m.sub?`<span class="sub">${esc(m.sub)}</span>`:""}</span>`;
@@ -425,7 +446,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
       Object.keys(tbl).forEach(k=>{ (tbl[k]||[]).forEach(n=>{ (t[k]=t[k]||[]).push({name:n,sub:""}); total++; }); });
       DATA={tables:t,total:total,when:""}; save();
       $("#status").textContent=`${total}名 / ${TABLES.filter(x=>t[x]&&t[x].length).length}卓`;
-      $("#exportBtn").style.display=""; refreshCounts(); return true;
+      refreshCounts(); return true;
     }catch(e){ return false; }
   }
 
@@ -451,35 +472,44 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
   function toast(msg){ const t=$("#toast"); t.textContent=msg; t.classList.add("show");
     clearTimeout(toTimer); toTimer=setTimeout(()=>t.classList.remove("show"),2600); }
 
+  // ---------- 検索 ----------
+  function nrm(s){ return String(s==null?"":s).normalize("NFKC").toLowerCase().replace(/\s+/g,""); }
+  function clearHL(){ svg.querySelectorAll(".table").forEach(g=>g.classList.remove("hit","dim")); }
+  function highlight(letters){ const set=new Set(letters);
+    svg.querySelectorAll(".table").forEach(g=>{ const t=g.getAttribute("data-t");
+      g.classList.toggle("hit",set.has(t)); g.classList.toggle("dim",set.size>0&&!set.has(t)); }); }
+  let resList=[];
+  function runSearch(){
+    const q=$("#q").value.trim();
+    $("#qclr").style.display=q?"block":"none";
+    const box=$("#results");
+    if(!q||!DATA){ box.classList.remove("show"); box.innerHTML=""; clearHL(); resList=[]; return; }
+    const qq=nrm(q); resList=[];
+    for(const t of TABLES){ (DATA.tables[t]||[]).forEach(m=>{ if(nrm(m.name).includes(qq)) resList.push({t,name:m.name}); }); }
+    if(!resList.length){ box.innerHTML='<div class="none">該当者なし</div>'; box.classList.add("show"); clearHL(); return; }
+    highlight([...new Set(resList.map(r=>r.t))]);
+    box.innerHTML=resList.map((r,i)=>`<div class="r" data-i="${i}"><span class="tag">${r.t}</span><span class="nm">${esc(r.name)}<span class="sub" style="color:var(--sub);margin-left:8px">${r.t}卓</span></span></div>`).join("");
+    box.classList.add("show");
+  }
+  function pickResult(i){ const r=resList[i]; if(!r) return;
+    $("#results").classList.remove("show"); highlight([r.t]); openTable(r.t); }
+
   // ---------- イベント ----------
-  $("#loadBtn").addEventListener("click",()=>$("#file").click());
-  $("#file").addEventListener("change",e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=""; });
-  $("#setupBtn").addEventListener("click",()=>{ if(WB) openSetup(); else toast("先にExcelを読み込んでください"); });
-  $("#exportBtn").addEventListener("click",exportBaked);
+  $("#q").addEventListener("input",runSearch);
+  $("#q").addEventListener("keydown",e=>{ if(e.key==="Enter"&&resList.length){ e.preventDefault(); pickResult(0);} });
+  $("#qclr").addEventListener("click",()=>{ $("#q").value=""; runSearch(); $("#q").focus(); });
+  $("#results").addEventListener("click",e=>{ const r=e.target.closest(".r"); if(r) pickResult(+r.dataset.i); });
+  document.addEventListener("click",e=>{ if(!e.target.closest(".search")) $("#results").classList.remove("show"); });
   $("#scrim").addEventListener("click",closeSheet);
   $("#sheetX").addEventListener("click",closeSheet);
-  $("#selSheet").addEventListener("change",syncSetup);
-  ["#selHeader","#selTable","#selName","#selSub"].forEach(id=>$(id).addEventListener("change",updatePreview));
-  $("#setupCancel").addEventListener("click",()=>$("#modal").classList.remove("show"));
-  $("#setupApply").addEventListener("click",applySetup);
-  // ドラッグ＆ドロップ
-  const drop=$("#drop");
-  ["dragenter","dragover"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.add("over");}));
-  ["dragleave","drop"].forEach(ev=>document.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove("over");}));
-  document.addEventListener("drop",e=>{ const f=e.dataTransfer&&e.dataTransfer.files[0]; if(f) handleFile(f); });
 
   // ---------- 起動 ----------
   drawHall();
   if(restore()){
     $("#status").textContent=`${DATA.total||0}名 / ${TABLES.filter(t=>DATA.tables[t]&&DATA.tables[t].length).length}卓`;
-    $("#exportBtn").style.display="";
     refreshCounts();
   }
   applyHashZ(); // 圧縮版URL/QRで開いた場合に反映（非同期）
-  if(window.__BAKED__){ // データ入りファイルでは読込系ボタンを隠してシンプルに
-    $("#loadBtn").style.display="none"; $("#setupBtn").style.display="none"; $("#exportBtn").style.display="none";
-    $("#status").textContent=`${DATA.total||0}名（保存済みデータ）`;
-  }
 })();
 </script>
 </body>
