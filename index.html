@@ -240,11 +240,7 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     for(const t of TABLES){
       const [cx,cy]=POS[t];
       const g=el("g",{class:"table","data-t":t}, svg);
-      // 椅子（8席）
-      for(let i=0;i<8;i++){ const a=(Math.PI*2*i/8)-Math.PI/2;
-        el("rect",{class:"seat",x:cx+Math.cos(a)*(R+11)-7,y:cy+Math.sin(a)*(R+11)-7,width:14,height:14,rx:3,
-          transform:`rotate(${a*180/Math.PI+90} ${cx+Math.cos(a)*(R+11)} ${cy+Math.sin(a)*(R+11)})`}, g);
-      }
+      el("g",{class:"seatring"}, g);   // 椅子は人数分だけ refreshCounts で描く
       el("circle",{class:"tcircle",cx,cy,r:R}, g);
       el("text",{class:"tletter",x:cx,y:cy+1}, g).textContent=t;
       el("text",{class:"tcount",x:cx,y:cy+R+15,"data-count":t}, g);
@@ -253,12 +249,22 @@ t.sheetStubs=true}if(t.type=="array"){t.type="binary";var a=xk(e,t);t.type="arra
     refreshCounts();
   }
 
+  // 椅子を人数分だけ描く（データ未読込のときは8席の見本）
+  function drawSeats(g,cx,cy,n){
+    const ring=g.querySelector(".seatring"); if(!ring) return;
+    ring.innerHTML="";
+    const k = n>0 ? n : 8;
+    for(let i=0;i<k;i++){ const a=(Math.PI*2*i/k)-Math.PI/2;
+      el("rect",{class:"seat",x:cx+Math.cos(a)*(R+11)-7,y:cy+Math.sin(a)*(R+11)-7,width:14,height:14,rx:3,
+        transform:`rotate(${a*180/Math.PI+90} ${cx+Math.cos(a)*(R+11)} ${cy+Math.sin(a)*(R+11)})`}, ring);
+    }
+  }
   function refreshCounts(){
     for(const t of TABLES){
       const g=svg.querySelector(`.table[data-t="${t}"]`);
       const c=svg.querySelector(`.tcount[data-count="${t}"]`);
       const n=DATA&&DATA.tables[t]?DATA.tables[t].length:0;
-      if(g) g.classList.toggle("filled", n>0);
+      if(g){ g.classList.toggle("filled", n>0); drawSeats(g, POS[t][0], POS[t][1], n); }
       if(c) c.textContent = n>0 ? n+"名" : "";
     }
   }
